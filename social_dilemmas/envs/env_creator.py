@@ -17,7 +17,7 @@ def get_env_creator(
         def env_creator(_):
             return HarvestEnv(
                 num_agents=num_agents,
-                return_agent_actions=True,
+                return_agent_actions=False,
                 use_collective_reward=use_collective_reward,
                 inequity_averse_reward=inequity_averse_reward,
                 alpha=alpha,
