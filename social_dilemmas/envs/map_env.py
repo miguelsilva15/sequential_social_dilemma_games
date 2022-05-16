@@ -21,9 +21,9 @@ _MAP_ENV_ACTIONS = {
 ORIENTATIONS = {"LEFT": [0, -1], "RIGHT": [0, 1], "UP": [-1, 0], "DOWN": [1, 0]}
 
 DEFAULT_COLOURS = {
-    b" ": np.array([0, 0, 0], dtype=np.uint8),  # Black background
-    b"0": np.array([0, 0, 0], dtype=np.uint8),  # Black background beyond map walls
-    b"": np.array([180, 180, 180], dtype=np.uint8),  # Grey board walls
+    b" ": np.array([0, 0, 0] , dtype=np.uint8),  # Black background
+    b"0": np.array([0, 0, 0] , dtype=np.uint8),  # Black background beyond map walls
+    b"": np.array([180, 180, 180]  , dtype=np.uint8),  # Grey board walls
     b"@": np.array([180, 180, 180], dtype=np.uint8),  # Grey board walls
     b"A": np.array([0, 255, 0], dtype=np.uint8),  # Green apples
     b"F": np.array([255, 255, 0], dtype=np.uint8),  # Yellow firing beam
@@ -107,7 +107,7 @@ class MapEnv(MultiAgentEnv):
         self.world_map_color = np.full(
             (len(self.base_map) + view_len * 2, len(self.base_map[0]) + view_len * 2, 3),
             fill_value=0,
-            dtype=np.uint8,
+            # dtype=np.uint8,
         )
         self.beam_pos = []
 
@@ -144,19 +144,19 @@ class MapEnv(MultiAgentEnv):
                     low=0,
                     high=len(self.all_actions),
                     shape=(self.num_agents - 1,),
-                    dtype=np.uint8,
+                    # dtype=np.uint8,
                 ),
                 "visible_agents": Box(
                     low=0,
                     high=1,
                     shape=(self.num_agents - 1,),
-                    dtype=np.uint8,
+                    # dtype=np.uint8,
                 ),
                 "prev_visible_agents": Box(
                     low=0,
                     high=1,
                     shape=(self.num_agents - 1,),
-                    dtype=np.uint8,
+                    # dtype=np.uint8,
                 ),
             }
         obs_space = Dict(obs_space)
@@ -164,7 +164,7 @@ class MapEnv(MultiAgentEnv):
         # with the correct dtype.
         # See DictFlatteningPreprocessor in ray/rllib/models/preprocessors.py.
         obs_space.dtype = np.uint8
-        return obs_space
+        return obs_space['curr_obs']
 
     def custom_reset(self):
         """Reset custom elements of the map. For example, spawn apples and build walls"""
@@ -274,7 +274,7 @@ class MapEnv(MultiAgentEnv):
             if self.return_agent_actions:
                 prev_actions = np.array(
                     [actions[key] for key in sorted(actions.keys()) if key != agent.agent_id]
-                ).astype(np.uint8)
+                )# .astype(np.uint8)
                 visible_agents = self.find_visible_agents(agent.agent_id)
                 observations[agent.agent_id] = {
                     "curr_obs": rgb_arr,
@@ -284,7 +284,8 @@ class MapEnv(MultiAgentEnv):
                 }
                 agent.prev_visible_agents = visible_agents
             else:
-                observations[agent.agent_id] = {"curr_obs": rgb_arr}
+                # observations[agent.agent_id] = {"curr_obs": rgb_arr}
+                observations[agent.agent_id] = rgb_arr
             rewards[agent.agent_id] = agent.compute_reward()
             dones[agent.agent_id] = agent.get_done()
             infos[agent.agent_id] = {}
@@ -306,7 +307,7 @@ class MapEnv(MultiAgentEnv):
         dones["__all__"] = np.any(list(dones.values()))
         return observations, rewards, dones, infos
 
-    def reset(self):
+    def reset(self, seed=None):
         """Reset the environment.
 
         This method is performed in between rollouts. It resets the state of
@@ -318,6 +319,8 @@ class MapEnv(MultiAgentEnv):
             the initial observation of the space. The initial reward is assumed
             to be zero.
         """
+        if seed:
+            np.random.seed(seed)
         self.beam_pos = []
         self.agents = {}
         self.setup_agents()
@@ -333,7 +336,7 @@ class MapEnv(MultiAgentEnv):
             # concatenate on the prev_actions to the observations
             if self.return_agent_actions:
                 # No previous actions so just pass in "wait" action
-                prev_actions = np.array([4 for _ in range(self.num_agents - 1)]).astype(np.uint8)
+                prev_actions = np.array([4 for _ in range(self.num_agents - 1)]) #.astype(np.uint8)
                 visible_agents = self.find_visible_agents(agent.agent_id)
                 observations[agent.agent_id] = {
                     "curr_obs": rgb_arr,
@@ -343,11 +346,10 @@ class MapEnv(MultiAgentEnv):
                 }
                 agent.prev_visible_agents = visible_agents
             else:
-                observations[agent.agent_id] = {"curr_obs": rgb_arr}
+                # observations[agent.agent_id] = {"curr_obs": rgb_arr}
+                observations[agent.agent_id] = rgb_arr
         return observations
-
-    def seed(self, seed=None):
-        np.random.seed(seed)
+       
 
     def close(self):
         plt.close()
@@ -713,7 +715,7 @@ class MapEnv(MultiAgentEnv):
         self.world_map_color = np.full(
             (len(self.base_map) + self.view_len * 2, len(self.base_map[0]) + self.view_len * 2, 3),
             fill_value=0,
-            dtype=np.uint8,
+            # dtype=np.uint8,
         )
         self.build_walls()
         self.custom_reset()
@@ -916,7 +918,7 @@ class MapEnv(MultiAgentEnv):
                 else 0
                 for agent_tup in other_agent_pos
             ],
-            dtype=np.uint8,
+            # dtype=np.uint8,
         )
 
     @staticmethod

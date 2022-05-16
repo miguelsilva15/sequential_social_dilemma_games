@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.random import rand
+from gym.spaces import Discrete
 
 from social_dilemmas.envs.agent import HarvestAgent
 from social_dilemmas.envs.gym.discrete_with_dtype import DiscreteWithDType
@@ -46,7 +47,7 @@ class HarvestEnv(MapEnv):
 
     @property
     def action_space(self):
-        return DiscreteWithDType(8, dtype=np.uint8)
+        return Discrete(8)
 
     def setup_agents(self):
         map_with_agents = self.get_map_with_agents()

@@ -31,19 +31,24 @@ class ssd_parallel_env(ParallelEnv):
         self.max_cycles = max_cycles
         self.possible_agents = list(self.ssd_env.agents.keys())
         self.ssd_env.reset()
-        self.observation_space = lru_cache(maxsize=None)(lambda agent_id: env.observation_space)
         self.observation_spaces = {agent: env.observation_space for agent in self.possible_agents}
-        self.action_space = lru_cache(maxsize=None)(lambda agent_id: env.action_space)
         self.action_spaces = {agent: env.action_space for agent in self.possible_agents}
 
-    def reset(self):
+    # @lru_cache(maxsize=None)
+    def observation_space(self, agent):
+        return self.observation_spaces[agent]
+
+    # @lru_cache(maxsize=None)
+    def action_space(self, agent):
+        return self.action_spaces[agent]
+
+    def reset(self, seed=None):
+        if seed:
+            self.ssd_env.seed(seed)
         self.agents = self.possible_agents[:]
         self.num_cycles = 0
         self.dones = {agent: False for agent in self.agents}
         return self.ssd_env.reset()
-
-    def seed(self, seed=None):
-        return self.ssd_env.seed(seed)
 
     def render(self, mode="human"):
         return self.ssd_env.render(mode=mode)
