@@ -4,7 +4,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from gym.spaces import Box, Dict
-from ray.rllib.agents.callbacks import DefaultCallbacks
+# from ray.rllib.agents.callbacks import DefaultCallbacks
+from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
+
+
 from ray.rllib.env import MultiAgentEnv
 
 _MAP_ENV_ACTIONS = {
@@ -28,8 +31,9 @@ DEFAULT_COLOURS = {
     b"A": np.array([0, 255, 0], dtype=np.uint8),  # Green apples
     b"F": np.array([255, 255, 0], dtype=np.uint8),  # Yellow firing beam
     b"P": np.array([159, 67, 255], dtype=np.uint8),  # Generic agent (any player)
+    b"L": np.array([208, 205, 133], dtype=np.uint8),  # Generic agent (any player)
     # Colours for agents. R value is a unique identifier
-    b"1": np.array([0, 0, 255], dtype=np.uint8),  # Pure blue
+    # b"1": np.array([0, 0, 255], dtype=np.uint8),  # Pure blue
     b"2": np.array([2, 81, 154], dtype=np.uint8),  # Sky blue
     b"3": np.array([204, 0, 204], dtype=np.uint8),  # Magenta
     b"4": np.array([216, 30, 54], dtype=np.uint8),  # Red
@@ -69,6 +73,7 @@ class MapEnv(MultiAgentEnv):
         inequity_averse_reward=False,
         alpha=0.0,
         beta=0.0,
+        proportion = 0.5
     ):
         """
 
@@ -94,6 +99,7 @@ class MapEnv(MultiAgentEnv):
         self.use_collective_reward = use_collective_reward
         self.inequity_averse_reward = inequity_averse_reward
         self.alpha = alpha
+        self.proportion = proportion
         self.beta = beta
         self.all_actions = _MAP_ENV_ACTIONS.copy()
         self.all_actions.update(extra_actions)
@@ -115,13 +121,17 @@ class MapEnv(MultiAgentEnv):
 
         # returns the agent at a desired position if there is one
         self.pos_dict = {}
-        self.spawn_points = []  # where agents can appear
+        # where agents can appear
+        self.spawn_points_apples = []
+        self.spawn_points_oranges = []  
 
         self.wall_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
                 if self.base_map[row, col] == b"P":
-                    self.spawn_points.append([row, col])
+                    self.spawn_points_apples.append([row, col])
+                if self.base_map[row, col] == b"L":
+                    self.spawn_points_oranges.append([row, col])
                 elif self.base_map[row, col] == b"@":
                     self.wall_points.append([row, col])
         self.setup_agents()
@@ -261,7 +271,11 @@ class MapEnv(MultiAgentEnv):
             row, col = agent.pos[0], agent.pos[1]
             # Firing beams have priority over agents and should cover them
             if self.world_map[row, col] not in [b"F", b"C"]:
-                self.single_update_world_color_map(row, col, agent.get_char_id())
+                if isinstance(agent, HarvestAppleAgent):
+                    self.single_update_world_color_map(row, col, b'P')
+                if isinstance(agent, HarvestOrangeAgent):
+                    self.single_update_world_color_map(row, col, b'L')
+
 
         observations = {}
         rewards = {}
@@ -373,8 +387,11 @@ class MapEnv(MultiAgentEnv):
             # If agent is not within map, skip.
             if not (0 <= agent.pos[0] < grid.shape[0] and 0 <= agent.pos[1] < grid.shape[1]):
                 continue
-
-            grid[agent.pos[0], agent.pos[1]] = char_id
+            if isinstance(agent, HarvestAppleAgent):
+              grid[agent.pos[0], agent.pos[1]] = b'P'
+            if isinstance(agent, HarvestOrangeAgent):
+              grid[agent.pos[0], agent.pos[1]] = b'L'  
+            # grid[agent.pos[0], agent.pos[1]] = char_id
 
         # beams should overlay agents
         for beam_pos in self.beam_pos:
@@ -396,6 +413,7 @@ class MapEnv(MultiAgentEnv):
 
     def full_map_to_colors(self):
         map_with_agents = self.get_map_with_agents()
+        # map_with_agents = self.world_map
         rgb_arr = np.zeros((map_with_agents.shape[0], map_with_agents.shape[1], 3), dtype=int)
         return self.map_to_colors(map_with_agents, self.color_map, rgb_arr)
 
@@ -817,18 +835,31 @@ class MapEnv(MultiAgentEnv):
         self.beam_pos += firing_points
         return updates
 
-    def spawn_point(self):
+    def spawn_point_apple(self):
         """Returns a randomly selected spawn point."""
         spawn_index = 0
         is_free_cell = False
         curr_agent_pos = [agent.pos.tolist() for agent in self.agents.values()]
-        np.random.shuffle(self.spawn_points)
-        for i, spawn_point in enumerate(self.spawn_points):
+        np.random.shuffle(self.spawn_points_apples)
+        for i, spawn_point in enumerate(self.spawn_points_apples):
             if [spawn_point[0], spawn_point[1]] not in curr_agent_pos:
                 spawn_index = i
                 is_free_cell = True
         assert is_free_cell, "There are not enough spawn points! Check your map?"
-        return np.array(self.spawn_points[spawn_index])
+        return np.array(self.spawn_points_apples[spawn_index])
+
+    def spawn_point_orange(self):
+        """Returns a randomly selected spawn point."""
+        spawn_index = 0
+        is_free_cell = False
+        curr_agent_pos = [agent.pos.tolist() for agent in self.agents.values()]
+        np.random.shuffle(self.spawn_points_oranges)
+        for i, spawn_point in enumerate(self.spawn_points_oranges):
+            if [spawn_point[0], spawn_point[1]] not in curr_agent_pos:
+                spawn_index = i
+                is_free_cell = True
+        assert is_free_cell, "There are not enough spawn points! Check your map?"
+        return np.array(self.spawn_points_oranges[spawn_index])
 
     def spawn_rotation(self):
         """Return a randomly selected initial rotation for an agent"""
@@ -923,4 +954,5 @@ class MapEnv(MultiAgentEnv):
 
     @staticmethod
     def get_environment_callbacks():
-        return DefaultCallbacks
+        # return DefaultCallbacks
+        return None

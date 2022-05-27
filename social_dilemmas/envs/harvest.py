@@ -2,15 +2,15 @@ import numpy as np
 from numpy.random import rand
 from gym.spaces import Discrete
 
-from social_dilemmas.envs.agent import HarvestAgent
-from social_dilemmas.envs.gym.discrete_with_dtype import DiscreteWithDType
+from math import floor
+from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.map_env import MapEnv
 from social_dilemmas.maps import HARVEST_MAP
 
 APPLE_RADIUS = 2
 
 # Add custom actions to the agent
-_HARVEST_ACTIONS = {"FIRE": 5}  # length of firing range
+# _HARVEST_ACTIONS = {"FIRE": 5}  # length of firing range
 
 SPAWN_PROB = [0, 0.005, 0.02, 0.05]
 
@@ -25,12 +25,13 @@ class HarvestEnv(MapEnv):
         return_agent_actions=False,
         use_collective_reward=False,
         inequity_averse_reward=False,
+        proportion = 0.5,
         alpha=0.0,
         beta=0.0,
     ):
         super().__init__(
             ascii_map,
-            _HARVEST_ACTIONS,
+            {},
             HARVEST_VIEW_SIZE,
             num_agents,
             return_agent_actions=return_agent_actions,
@@ -38,26 +39,39 @@ class HarvestEnv(MapEnv):
             inequity_averse_reward=inequity_averse_reward,
             alpha=alpha,
             beta=beta,
+            proportion=proportion
         )
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
                 if self.base_map[row, col] == b"A":
                     self.apple_points.append([row, col])
+        self.proportion = proportion
 
     @property
     def action_space(self):
-        return Discrete(8)
+        return Discrete(7)
 
     def setup_agents(self):
         map_with_agents = self.get_map_with_agents()
 
-        for i in range(self.num_agents):
-            agent_id = "agent-" + str(i)
-            spawn_point = self.spawn_point()
+        self.num_apple_agents = floor(self.proportion*self.num_agents)
+        self.num_orange_agents = self.num_agents - self.num_apple_agents
+
+        for i in range(self.num_apple_agents):
+            agent_id = "agent-apple-" + str(i)
+            spawn_point = self.spawn_point_apple()
             rotation = self.spawn_rotation()
             grid = map_with_agents
-            agent = HarvestAgent(agent_id, spawn_point, rotation, grid, view_len=HARVEST_VIEW_SIZE)
+            agent = HarvestAppleAgent(agent_id, spawn_point, rotation, grid, view_len=HARVEST_VIEW_SIZE)
+            self.agents[agent_id] = agent
+
+        for i in range(self.num_orange_agents):
+            agent_id = "agent-orange-" + str(i)
+            spawn_point = self.spawn_point_orange()
+            rotation = self.spawn_rotation()
+            grid = map_with_agents
+            agent = HarvestOrangeAgent(agent_id, spawn_point, rotation, grid, view_len=HARVEST_VIEW_SIZE)
             self.agents[agent_id] = agent
 
     def custom_reset(self):
