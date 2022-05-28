@@ -32,12 +32,13 @@ DEFAULT_COLOURS = {
     b"F": np.array([255, 255, 0], dtype=np.uint8),  # Yellow firing beam
     b"P": np.array([159, 67, 255], dtype=np.uint8),  # Generic agent (any player)
     b"L": np.array([208, 205, 133], dtype=np.uint8),  # Generic agent (any player)
+    b"O": np.array([254, 151, 0], dtype=np.uint8),
     # Colours for agents. R value is a unique identifier
     # b"1": np.array([0, 0, 255], dtype=np.uint8),  # Pure blue
     b"2": np.array([2, 81, 154], dtype=np.uint8),  # Sky blue
     b"3": np.array([204, 0, 204], dtype=np.uint8),  # Magenta
     b"4": np.array([216, 30, 54], dtype=np.uint8),  # Red
-    b"5": np.array([254, 151, 0], dtype=np.uint8),  # Orange
+    # b"5": np.array([254, 151, 0], dtype=np.uint8),  # Orange
     b"6": np.array([100, 255, 255], dtype=np.uint8),  # Cyan
     b"7": np.array([99, 99, 255], dtype=np.uint8),  # Lavender
     b"8": np.array([250, 204, 255], dtype=np.uint8),  # Pink

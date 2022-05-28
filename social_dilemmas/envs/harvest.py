@@ -46,6 +46,12 @@ class HarvestEnv(MapEnv):
             for col in range(self.base_map.shape[1]):
                 if self.base_map[row, col] == b"A":
                     self.apple_points.append([row, col])
+
+        self.orange_points = []
+        for row in range(self.base_map.shape[0]):
+            for col in range(self.base_map.shape[1]):
+                if self.base_map[row, col] == b"O":
+                    self.orange_points.append([row, col])
         self.proportion = proportion
 
     @property
@@ -78,6 +84,9 @@ class HarvestEnv(MapEnv):
         """Initialize the walls and the apples"""
         for apple_point in self.apple_points:
             self.single_update_map(apple_point[0], apple_point[1], b"A")
+        for orange_point in self.orange_points:
+            self.single_update_map(orange_point[0], orange_point[1], b"O")
+
 
     def custom_action(self, agent, action):
         agent.fire_beam(b"F")
@@ -111,7 +120,7 @@ class HarvestEnv(MapEnv):
         for i in range(len(self.apple_points)):
             row, col = self.apple_points[i]
             # apples can't spawn where agents are standing or where an apple already is
-            if [row, col] not in agent_positions and self.world_map[row, col] != b"A":
+            if [row, col] not in agent_positions and (self.world_map[row, col] != b"A") and (self.world_map[row, col] != b"O"):
                 num_apples = 0
                 for j in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
                     for k in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
@@ -130,6 +139,42 @@ class HarvestEnv(MapEnv):
                 if rand_num < spawn_prob:
                     new_apple_points.append((row, col, b"A"))
         return new_apple_points
+
+    def spawn_oranges(self):
+        """Construct the apples spawned in this step.
+
+        Returns
+        -------
+        new_orange_points: list of 2-d lists
+            a list containing lists indicating the spawn positions of new orange
+        """
+
+        new_orange_points = []
+        agent_positions = self.agent_pos
+        random_numbers = rand(len(self.apple_points))
+        r = 0
+        for i in range(len(self.apple_points)):
+            row, col = self.apple_points[i]
+            # apples can't spawn where agents are standing or where an apple already is
+            if [row, col] not in agent_positions and (self.world_map[row, col] != b"A") and (self.world_map[row, col] != b"O"):
+                num_oranges = 0
+                for j in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
+                    for k in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
+                        if j ** 2 + k ** 2 <= APPLE_RADIUS:
+                            x, y = self.apple_points[i]
+                            if (
+                                0 <= x + j < self.world_map.shape[0]
+                                and self.world_map.shape[1] > y + k >= 0
+                            ):
+                                if (self.world_map[x + j, y + k] == b"O") or (self.world_map[x + j, y + k] == b"A"):
+                                    num_oranges += 1
+
+                spawn_prob = SPAWN_PROB[min(num_oranges, 3)]
+                rand_num = random_numbers[r]
+                r += 1
+                if rand_num < spawn_prob:
+                    new_orange_points.append((row, col, b"O"))
+        return new_orange_points
 
     def count_apples(self, window):
         # compute how many apples are in window

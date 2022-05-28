@@ -187,6 +187,9 @@ class HarvestAppleAgent(Agent):
         if char == b"A":
             self.reward_this_turn += 1
             return b" "
+        elif char == b"O":
+            self.reward_this_turn += .5
+            return b" "        
         else:
             return char
 
@@ -217,7 +220,10 @@ class HarvestOrangeAgent(Agent):
     def consume(self, char):
         """Defines how an agent interacts with the char it is standing on"""
         if char == b"A":
-            self.reward_this_turn += 0.5
+            self.reward_this_turn += .5
+            return b" "
+        elif char == b"O":
+            self.reward_this_turn += 1
             return b" "
         else:
             return char
