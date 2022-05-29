@@ -182,7 +182,7 @@ class MapEnv(MultiAgentEnv):
         Compute the sum of historical rewards for each agent
         """
         returns = []
-        for agent_handle in range(self.agents):
+        for agent_handle in self.agents:
             returns += [np.sum(self.rewards_history[agent_handle])]
         return returns
 
