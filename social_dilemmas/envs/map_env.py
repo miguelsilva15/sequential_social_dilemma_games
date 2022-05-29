@@ -136,7 +136,7 @@ class MapEnv(MultiAgentEnv):
                 elif self.base_map[row, col] == b"@":
                     self.wall_points.append([row, col])
         self.setup_agents()
-
+        self.reward_history = self.generate_reward_history()
     @property
     def observation_space(self):
         obs_space = {
@@ -176,6 +176,30 @@ class MapEnv(MultiAgentEnv):
         # See DictFlatteningPreprocessor in ray/rllib/models/preprocessors.py.
         obs_space.dtype = np.uint8
         return obs_space['curr_obs']
+
+    def _get_returns(self):
+        """
+        Compute the sum of historical rewards for each agent
+        """
+        returns = []
+        for agent_handle in range(self.agents):
+            returns += [np.sum(self.rewards_history[agent_handle])]
+        return returns
+
+    def utilitarian_metric(self):
+        """
+        The Utilitarian metric (U), also known as Efficiency, measures the sum total
+        of all rewards obtained by all agents: it is defined as the average over players
+        of sum of rewards
+        """
+        returns = self._get_returns()
+        return np.mean(returns)
+
+    def generate_reward_history(self):
+        reward_history = {}
+        for agent_id in self.agents:
+            reward_history[agent_id] = 0
+        return reward_history
 
     def custom_reset(self):
         """Reset custom elements of the map. For example, spawn apples and build walls"""
@@ -301,7 +325,9 @@ class MapEnv(MultiAgentEnv):
             else:
                 # observations[agent.agent_id] = {"curr_obs": rgb_arr}
                 observations[agent.agent_id] = rgb_arr
-            rewards[agent.agent_id] = agent.compute_reward()
+            temporal_reward = agent.compute_reward()
+            rewards[agent.agent_id] = temporal_reward
+            self.reward_history[agent.agent_id] += temporal_reward
             dones[agent.agent_id] = agent.get_done()
             infos[agent.agent_id] = {}
 
@@ -319,6 +345,7 @@ class MapEnv(MultiAgentEnv):
                 temp_rewards[agent] -= (dis_inequity + adv_inequity) / (self.num_agents - 1)
             rewards = temp_rewards
 
+        infos['Utilitarian'] = self.utilitarian_metric()
         dones["__all__"] = np.any(list(dones.values()))
         return observations, rewards, dones, infos
 

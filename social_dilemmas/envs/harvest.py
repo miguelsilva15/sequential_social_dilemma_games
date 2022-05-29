@@ -98,6 +98,25 @@ class HarvestEnv(MapEnv):
         )
         return updates
 
+    def _get_returns(self):
+        """
+        Compute the sum of historical rewards for each agent
+        """
+        returns = []
+        for agent_handle in range(self.agents):
+            returns += [np.sum(self.rewards_history[agent_handle])]
+        return returns
+
+    def utilitarian_metric(self):
+        """
+        The Utilitarian metric (U), also known as Efficiency, measures the sum total
+        of all rewards obtained by all agents: it is defined as the average over players
+        of sum of rewards
+        """
+        returns = self._get_returns()
+        return np.mean(returns)
+
+
     def custom_map_update(self):
         """See parent class"""
         # spawn the apples
