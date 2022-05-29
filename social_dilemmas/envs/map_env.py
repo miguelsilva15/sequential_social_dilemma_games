@@ -210,7 +210,7 @@ class MapEnv(MultiAgentEnv):
         time at which the rewards are collected
         """
         times = []
-        for agent_handle in range(self.n_apple_agents):
+        for agent_handle in self.agents:
             rewards = self.rewards_history[agent_handle]
             ti = np.argwhere(np.array(rewards) > 0)
             if len(ti) != 0:
