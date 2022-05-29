@@ -136,7 +136,7 @@ class MapEnv(MultiAgentEnv):
                 elif self.base_map[row, col] == b"@":
                     self.wall_points.append([row, col])
         self.setup_agents()
-        self.reward_history = self.generate_reward_history()
+        self.rewards_history = self.generate_reward_history()
     @property
     def observation_space(self):
         obs_space = {
@@ -186,6 +186,15 @@ class MapEnv(MultiAgentEnv):
             returns += [np.sum(self.rewards_history[agent_handle])]
         return returns
 
+    def equality_metric(self):
+        """
+        The Equality metric (E) is defined using the Gini coefficient
+        """
+        returns = self._get_returns()
+        numerator = np.sum([abs(ri - rj) for ri in returns for rj in returns])
+        return 1 - (numerator / (2 * len(self.agents) * np.sum(returns) + 1e-6))
+
+
     def utilitarian_metric(self):
         """
         The Utilitarian metric (U), also known as Efficiency, measures the sum total
@@ -195,10 +204,23 @@ class MapEnv(MultiAgentEnv):
         returns = self._get_returns()
         return np.mean(returns)
 
+    def sustainability_metric(self):
+        """
+        The Sustainability metric (S) is defined as the average
+        time at which the rewards are collected
+        """
+        times = []
+        for agent_handle in range(self.n_apple_agents):
+            rewards = self.rewards_history[agent_handle]
+            ti = np.argwhere(np.array(rewards) > 0)
+            if len(ti) != 0:
+                times.append(np.mean(ti))
+        return np.mean(times) if len(times) > 0 else 0.0
+
     def generate_reward_history(self):
         reward_history = {}
         for agent_id in self.agents:
-            reward_history[agent_id] = 0
+            reward_history[agent_id] = []
         return reward_history
 
     def custom_reset(self):
@@ -327,9 +349,14 @@ class MapEnv(MultiAgentEnv):
                 observations[agent.agent_id] = rgb_arr
             temporal_reward = agent.compute_reward()
             rewards[agent.agent_id] = temporal_reward
-            self.reward_history[agent.agent_id] += temporal_reward
+            self.rewards_history[agent.agent_id].append(temporal_reward)
             dones[agent.agent_id] = agent.get_done()
             infos[agent.agent_id] = {}
+
+        for agent in self.agents.values():  
+            infos[agent.agent_id]['Utilitarian'] = self.utilitarian_metric()
+            infos[agent.agent_id]['Equality'] = self.equality_metric()
+            infos[agent.agent_id]['Sustainability'] = self.sustainability_metric()
 
         if self.use_collective_reward:
             collective_reward = sum(rewards.values())
@@ -344,8 +371,7 @@ class MapEnv(MultiAgentEnv):
                 adv_inequity = self.beta * sum(diff[diff < 0])
                 temp_rewards[agent] -= (dis_inequity + adv_inequity) / (self.num_agents - 1)
             rewards = temp_rewards
-
-        infos['Utilitarian'] = self.utilitarian_metric()
+        
         dones["__all__"] = np.any(list(dones.values()))
         return observations, rewards, dones, infos
 
