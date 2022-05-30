@@ -28,6 +28,7 @@ def env(max_cycles=MAX_CYCLES, **ssd_args):
 class ssd_parallel_env(ParallelEnv):
     def __init__(self, env, max_cycles):
         self.ssd_env = env
+        self.done = False
         self.max_cycles = max_cycles
         self.possible_agents = list(self.ssd_env.agents.keys())
         self.ssd_env.reset()
@@ -45,6 +46,7 @@ class ssd_parallel_env(ParallelEnv):
     def reset(self, seed=None):
         if seed:
             self.ssd_env.seed(seed)
+        self.done = False
         self.agents = self.possible_agents[:]
         self.num_cycles = 0
         self.dones = {agent: False for agent in self.agents}

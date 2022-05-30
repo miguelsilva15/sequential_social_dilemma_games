@@ -104,6 +104,7 @@ class MapEnv(MultiAgentEnv):
         self.proportion = proportion
         self.beta = beta
         self.spawn = spawn
+        self.done = False
         self.all_actions = _MAP_ENV_ACTIONS.copy()
         self.all_actions.update(extra_actions)
         # Map without agents or beams
@@ -374,7 +375,10 @@ class MapEnv(MultiAgentEnv):
                 adv_inequity = self.beta * sum(diff[diff < 0])
                 temp_rewards[agent] -= (dis_inequity + adv_inequity) / (self.num_agents - 1)
             rewards = temp_rewards
-        
+        if not ((b'A' in self.world_map) or (b'O' in self.world_map)):
+            for agent in self.agents.values():
+                dones[agent.agent_id] = True
+            self.done = True
         dones["__all__"] = np.any(list(dones.values()))
         return observations, rewards, dones, infos
 
@@ -394,6 +398,7 @@ class MapEnv(MultiAgentEnv):
             np.random.seed(seed)
         self.beam_pos = []
         self.agents = {}
+        self.done = False
         self.setup_agents()
         self.reset_map()
         if self.spawn:
