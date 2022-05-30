@@ -14,7 +14,7 @@ APPLE_RADIUS = 2
 
 SPAWN_PROB = [0, 0.005, 0.02, 0.05]
 
-HARVEST_VIEW_SIZE = 7
+HARVEST_VIEW_SIZE = 3
 
 
 class HarvestEnv(MapEnv):
@@ -27,6 +27,7 @@ class HarvestEnv(MapEnv):
         inequity_averse_reward=False,
         proportion = 0.5,
         alpha=0.0,
+        poc = True,
         beta=0.0,
     ):
         super().__init__(
@@ -39,6 +40,7 @@ class HarvestEnv(MapEnv):
             inequity_averse_reward=inequity_averse_reward,
             alpha=alpha,
             beta=beta,
+            poc = poc,
             proportion=proportion
         )
         self.apple_points = []

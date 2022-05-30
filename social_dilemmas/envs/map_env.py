@@ -6,7 +6,7 @@ import numpy as np
 from gym.spaces import Box, Dict
 # from ray.rllib.agents.callbacks import DefaultCallbacks
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
-
+from social_dilemmas.envs.generate_map import create_map
 
 from ray.rllib.env import MultiAgentEnv
 
@@ -75,7 +75,8 @@ class MapEnv(MultiAgentEnv):
         spawn=False,
         alpha=0.0,
         beta=0.0,
-        proportion = 0.5
+        proportion = 0.5,
+        poc=True
     ):
         """
 
@@ -94,7 +95,11 @@ class MapEnv(MultiAgentEnv):
             If true, the observation space will include the actions of other agents
         """
         self.num_agents = num_agents
-        self.base_map = self.ascii_to_numpy(ascii_map)
+        self.poc = poc
+        if self.poc:
+            self.base_map = self.ascii_to_numpy(create_map())
+        else:
+            self.base_map = self.ascii_to_numpy(ascii_map)
         self.view_len = view_len
         self.map_padding = view_len
         self.return_agent_actions = return_agent_actions
@@ -394,6 +399,8 @@ class MapEnv(MultiAgentEnv):
             the initial observation of the space. The initial reward is assumed
             to be zero.
         """
+        if self.poc:
+            self.base_map = self.ascii_to_numpy(create_map())
         if seed:
             np.random.seed(seed)
         self.beam_pos = []
