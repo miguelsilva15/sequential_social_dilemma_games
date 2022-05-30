@@ -1,13 +1,14 @@
 from social_dilemmas.envs.cleanup import CleanupEnv
 from social_dilemmas.envs.harvest import HarvestEnv
 from social_dilemmas.envs.switch import SwitchEnv
-
+from social_dilemmas.maps import HARVEST_MAP
 
 def get_env_creator(
     env,
     num_agents,
     use_collective_reward=False,
     inequity_averse_reward=False,
+    ascii_map=HARVEST_MAP,
     alpha=0.0,
     beta=0.0,
     num_switches=6,
@@ -18,6 +19,7 @@ def get_env_creator(
         def env_creator(_):
             return HarvestEnv(
                 num_agents=num_agents,
+                ascii_map=ascii_map,
                 return_agent_actions=False,
                 use_collective_reward=use_collective_reward,
                 inequity_averse_reward=inequity_averse_reward,

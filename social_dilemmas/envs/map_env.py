@@ -72,6 +72,7 @@ class MapEnv(MultiAgentEnv):
         return_agent_actions=False,
         use_collective_reward=False,
         inequity_averse_reward=False,
+        spawn=False,
         alpha=0.0,
         beta=0.0,
         proportion = 0.5
@@ -102,6 +103,7 @@ class MapEnv(MultiAgentEnv):
         self.alpha = alpha
         self.proportion = proportion
         self.beta = beta
+        self.spawn = spawn
         self.all_actions = _MAP_ENV_ACTIONS.copy()
         self.all_actions.update(extra_actions)
         # Map without agents or beams
@@ -309,8 +311,9 @@ class MapEnv(MultiAgentEnv):
         # execute custom moves like firing
         self.update_custom_moves(agent_actions)
 
-        # execute spawning events
-        self.custom_map_update()
+        if self.spawn:
+            # execute spawning events
+            self.custom_map_update()
 
         map_with_agents = self.get_map_with_agents()
         # Add agents to color map
@@ -393,7 +396,8 @@ class MapEnv(MultiAgentEnv):
         self.agents = {}
         self.setup_agents()
         self.reset_map()
-        self.custom_map_update()
+        if self.spawn:
+            self.custom_map_update()
 
         map_with_agents = self.get_map_with_agents()
 

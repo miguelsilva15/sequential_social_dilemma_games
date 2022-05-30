@@ -102,7 +102,9 @@ class HarvestEnv(MapEnv):
         """See parent class"""
         # spawn the apples
         new_apples = self.spawn_apples()
+        new_apples = self.spawn_oranges()
         self.update_map(new_apples)
+        self.update_map(spawn_oranges)
 
     def spawn_apples(self):
         """Construct the apples spawned in this step.
