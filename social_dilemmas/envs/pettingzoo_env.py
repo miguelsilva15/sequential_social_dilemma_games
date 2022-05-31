@@ -58,6 +58,9 @@ class ssd_parallel_env(ParallelEnv):
     def close(self):
         self.ssd_env.close()
 
+    def observe(self, agent):
+        return self.ssd_env.color_view(agent)
+
     def step(self, actions):
         obss, rews, self.dones, infos = self.ssd_env.step(actions)
         del self.dones["__all__"]

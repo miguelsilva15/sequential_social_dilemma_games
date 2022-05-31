@@ -411,6 +411,16 @@ class MapEnv(MultiAgentEnv):
 
         map_with_agents = self.get_map_with_agents()
 
+        for agent in self.agents.values():
+            row, col = agent.pos[0], agent.pos[1]
+        # Firing beams have priority over agents and should cover them
+            if self.world_map[row, col] not in [b"F", b"C"]:
+                if isinstance(agent, HarvestAppleAgent):
+                    self.single_update_world_color_map(row, col, b'P')
+                if isinstance(agent, HarvestOrangeAgent):
+                    self.single_update_world_color_map(row, col, b'L')
+
+
         observations = {}
         for agent in self.agents.values():
             agent.full_map = map_with_agents

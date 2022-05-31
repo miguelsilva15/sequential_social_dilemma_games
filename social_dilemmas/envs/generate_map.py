@@ -32,7 +32,7 @@ def create_map(num_agents_orange=1, num_agents_apples=1, dimension = 10, distanc
     for value_x in range(x_A-distance, x_A+distance+1):
       value_to_sum_y = distance-abs(value_x-x_A)
       for value_y in range(y_A-value_to_sum_y, y_A+value_to_sum_y+1):
-        if (0 <= value_x <= (dimension+2)) and (0 <= value_y <= (dimension+2)):
+        if (0 <= value_x <= (dimension+1)) and (0 <= value_y <= (dimension+1)):
           list_values.append((value_x, value_y))
     list_values = list(set(list_values))
     list_values.remove((x_A, y_A))
