@@ -399,8 +399,6 @@ class MapEnv(MultiAgentEnv):
             the initial observation of the space. The initial reward is assumed
             to be zero.
         """
-        if self.poc:
-            self.base_map = self.ascii_to_numpy(create_map())
         if seed:
             np.random.seed(seed)
         self.beam_pos = []
