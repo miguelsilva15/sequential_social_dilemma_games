@@ -14,7 +14,7 @@ APPLE_RADIUS = 2
 
 SPAWN_PROB = [0, 0.005, 0.02, 0.05]
 
-HARVEST_VIEW_SIZE = 3
+HARVEST_VIEW_SIZE = 4
 
 
 class HarvestEnv(MapEnv):
