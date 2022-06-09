@@ -6,13 +6,16 @@ from math import floor
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.map_env import MapEnv
 from social_dilemmas.maps import HARVEST_MAP
+from social_dilemmas.envs.generate_map import create_map
 
 APPLE_RADIUS = 2
 
 # Add custom actions to the agent
 # _HARVEST_ACTIONS = {"FIRE": 5}  # length of firing range
 
-SPAWN_PROB = [0, 0.005, 0.02, 0.05]
+# SPAWN_PROB = [0, 0.005, 0.02, 0.05]
+
+SPAWN_PROB = [1, 1, 1, 1]
 
 HARVEST_VIEW_SIZE = 4
 
@@ -103,10 +106,27 @@ class HarvestEnv(MapEnv):
     def custom_map_update(self):
         """See parent class"""
         # spawn the apples
-        new_apples = self.spawn_apples()
-        new_apples = self.spawn_oranges()
-        self.update_map(new_apples)
-        self.update_map(spawn_oranges)
+        # new_apples = self.spawn_apples()
+        # new_oranges = self.spawn_oranges()
+        # self.update_map(new_apples)
+        # self.update_map(new_oranges)
+
+        self.base_map = self.ascii_to_numpy(create_map())
+
+        self.apple_points = []
+        for row in range(self.base_map.shape[0]):
+            for col in range(self.base_map.shape[1]):
+                if self.base_map[row, col] == b"A":
+                    self.apple_points.append([row, col])
+
+        self.orange_points = []
+        for row in range(self.base_map.shape[0]):
+            for col in range(self.base_map.shape[1]):
+                if self.base_map[row, col] == b"O":
+                    self.orange_points.append([row, col])
+
+
+
 
     def spawn_apples(self):
         """Construct the apples spawned in this step.

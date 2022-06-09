@@ -406,8 +406,8 @@ class MapEnv(MultiAgentEnv):
         self.done = False
         self.setup_agents()
         self.reset_map()
-        if self.spawn:
-            self.custom_map_update()
+        # if self.spawn:
+        self.custom_map_update()
 
         map_with_agents = self.get_map_with_agents()
 
