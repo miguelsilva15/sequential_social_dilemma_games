@@ -28,7 +28,7 @@ def create_map(num_agents_orange=1, num_agents_apples=1, dimension = 10, distanc
     # TODO: add existing map funcionality
     if seed:
       random.seed(666)
-    if existing_map: 
+    if existing_map is not None: 
         map_list = reverse_map_to_list(existing_map)
     else:
         map_list = []

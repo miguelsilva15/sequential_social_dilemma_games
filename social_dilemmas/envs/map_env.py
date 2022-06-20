@@ -362,8 +362,8 @@ class MapEnv(MultiAgentEnv):
             temporal_reward = agent.compute_reward()
             # discount reward
             if agent_actions[agent.agent_id] in ("MOVE_LEFT", "MOVE_RIGHT", "MOVE_UP", "MOVE_DOWN"):
-                temporal_reward += -.01
-            rewards[agent.agent_id] = temporal_reward
+                temporal_reward += -0.01
+            rewards[agent.agent_id] = round(temporal_reward, 2)
             self.rewards_history[agent.agent_id].append(temporal_reward)
             dones[agent.agent_id] = agent.get_done()
             infos[agent.agent_id] = {}
