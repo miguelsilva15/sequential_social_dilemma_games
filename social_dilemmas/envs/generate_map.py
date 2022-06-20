@@ -15,18 +15,29 @@ def generate_character(map_list, character='P', num=1, dimension=10):
             break
     return map_list, (x_random_index, y_random_index)
 
+def reverse_map_to_list(e_map):
+    final_map = []
+    for row in e_map.tolist():
+        row_list = []
+        for charac in row:
+            row_list.append(charac.decode("utf-8"))
+        final_map.append(''.join(row_list))
+    return final_map
 
-
-def create_map(num_agents_orange=1, num_agents_apples=1, dimension = 10, distance=2, seed=None):
+def create_map(num_agents_orange=1, num_agents_apples=1, dimension = 10, distance=2, seed=None, existing_map=None):
+    # TODO: add existing map funcionality
     if seed:
       random.seed(666)
-    map_list = []
-    map_list.append('@'*(dimension+2))
-    for i in range(dimension):
-        map_list.append('@'+' '*(dimension)+'@')
-    map_list.append('@'*(dimension+2))
-    map_list, _ = generate_character(map_list, character='L', num=num_agents_orange, dimension=dimension+1)
-    map_list, _ = generate_character(map_list, character='P', num=num_agents_apples,dimension=dimension+1)
+    if existing_map: 
+        map_list = reverse_map_to_list(existing_map)
+    else:
+        map_list = []
+        map_list.append('@'*(dimension+2))
+        for i in range(dimension):
+            map_list.append('@'+' '*(dimension)+'@')
+        map_list.append('@'*(dimension+2))
+        map_list, _ = generate_character(map_list, character='L', num=num_agents_orange, dimension=dimension+1)
+        map_list, _ = generate_character(map_list, character='P', num=num_agents_apples,dimension=dimension+1)
     map_list, (x_A, y_A) = generate_character(map_list, character='A', dimension=dimension+1)
     list_values = []
     for value_x in range(x_A-distance, x_A+distance+1):

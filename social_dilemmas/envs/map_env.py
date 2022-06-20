@@ -253,6 +253,9 @@ class MapEnv(MultiAgentEnv):
     def custom_map_update(self):
         """Custom map updates that don't have to do with agent actions"""
         pass
+    
+    def regenerate_map(self):
+        pass
 
     def setup_agents(self):
         """Construct all the agents for the environment"""
@@ -357,6 +360,9 @@ class MapEnv(MultiAgentEnv):
                 # observations[agent.agent_id] = {"curr_obs": rgb_arr}
                 observations[agent.agent_id] = rgb_arr
             temporal_reward = agent.compute_reward()
+            # discount reward
+            if agent_actions[agent.agent_id] in ("MOVE_LEFT", "MOVE_RIGHT", "MOVE_UP", "MOVE_DOWN"):
+                temporal_reward += -.01
             rewards[agent.agent_id] = temporal_reward
             self.rewards_history[agent.agent_id].append(temporal_reward)
             dones[agent.agent_id] = agent.get_done()
@@ -381,9 +387,12 @@ class MapEnv(MultiAgentEnv):
                 temp_rewards[agent] -= (dis_inequity + adv_inequity) / (self.num_agents - 1)
             rewards = temp_rewards
         if not ((b'A' in self.world_map) or (b'O' in self.world_map)):
-            for agent in self.agents.values():
-                dones[agent.agent_id] = True
-            self.done = True
+            # HERE IS WHERE YOU HAVE TO ADD THE REGENERATION OF THE MAP
+            # TODO:
+            self.regenerate_map()
+            # for agent in self.agents.values():
+            #     dones[agent.agent_id] = True
+            # self.done = True
         dones["__all__"] = np.any(list(dones.values()))
         return observations, rewards, dones, infos
 

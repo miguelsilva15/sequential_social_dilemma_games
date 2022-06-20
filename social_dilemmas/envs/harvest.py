@@ -103,6 +103,23 @@ class HarvestEnv(MapEnv):
         )
         return updates
 
+    def regenerate_map(self):
+        # TODO: edit create map para solo llamarlo aqui
+        self.base_map = self.ascii_to_numpy(create_map(existing_map = self.base_map))
+
+        self.apple_points = []
+        for row in range(self.base_map.shape[0]):
+            for col in range(self.base_map.shape[1]):
+                if self.base_map[row, col] == b"A":
+                    self.apple_points.append([row, col])
+
+        self.orange_points = []
+        for row in range(self.base_map.shape[0]):
+            for col in range(self.base_map.shape[1]):
+                if self.base_map[row, col] == b"O":
+                    self.orange_points.append([row, col])
+
+
     def custom_map_update(self):
         """See parent class"""
         # spawn the apples
