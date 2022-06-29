@@ -7,6 +7,7 @@ from gym.spaces import Box, Dict
 # from ray.rllib.agents.callbacks import DefaultCallbacks
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.generate_map import create_map
+from social_dilemmas.maps import BATTLE_MAP
 
 from ray.rllib.env import MultiAgentEnv
 
@@ -97,7 +98,8 @@ class MapEnv(MultiAgentEnv):
         self.num_agents = num_agents
         self.poc = poc
         if self.poc:
-            self.base_map = self.ascii_to_numpy(create_map())
+            # self.base_map = self.ascii_to_numpy(create_map(distance=9))
+            self.base_map = self.ascii_to_numpy(BATTLE_MAP)
         else:
             self.base_map = self.ascii_to_numpy(ascii_map)
         self.view_len = view_len
@@ -361,9 +363,8 @@ class MapEnv(MultiAgentEnv):
                 observations[agent.agent_id] = rgb_arr
             temporal_reward = agent.compute_reward()
             # discount reward
-            if agent_actions[agent.agent_id] in ("MOVE_LEFT", "MOVE_RIGHT", "MOVE_UP", "MOVE_DOWN"):
-                # temporal_reward += round(-0.01, 2)
-                pass
+            # siempre se descuenta
+            temporal_reward += round(-0.01, 2)
             rewards[agent.agent_id] = round(temporal_reward, 2)
             self.rewards_history[agent.agent_id].append(temporal_reward)
             dones[agent.agent_id] = agent.get_done()
@@ -373,6 +374,8 @@ class MapEnv(MultiAgentEnv):
             infos[agent.agent_id]['Utilitarian'] = self.utilitarian_metric()
             infos[agent.agent_id]['Equality'] = self.equality_metric()
             infos[agent.agent_id]['Sustainability'] = self.sustainability_metric()
+            infos[agent.agent_id]['Reward'] = self.rewards_history[agent.agent_id]
+
 
         if self.use_collective_reward:
             collective_reward = sum(rewards.values())
@@ -420,7 +423,9 @@ class MapEnv(MultiAgentEnv):
         self.custom_map_update()
 
         map_with_agents = self.get_map_with_agents()
+        self.rewards_history = self.generate_reward_history()
 
+        
         for agent in self.agents.values():
             row, col = agent.pos[0], agent.pos[1]
         # Firing beams have priority over agents and should cover them
