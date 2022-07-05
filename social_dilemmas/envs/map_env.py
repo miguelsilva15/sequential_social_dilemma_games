@@ -8,6 +8,8 @@ from gym.spaces import Box, Dict
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.generate_map import create_map
 from social_dilemmas.maps import BATTLE_MAP
+from social_dilemmas.maps import APPLE_AGENT_POSITON, APPLE_RESOURCE_POSITION, ORANGE_AGENT_POSITON
+
 
 from ray.rllib.env import MultiAgentEnv
 
@@ -98,8 +100,8 @@ class MapEnv(MultiAgentEnv):
         self.num_agents = num_agents
         self.poc = poc
         if self.poc:
-            # self.base_map = self.ascii_to_numpy(create_map(distance=9))
-            self.base_map = self.ascii_to_numpy(BATTLE_MAP)
+            self.base_map = self.ascii_to_numpy(create_map(distance=9))
+            # self.base_map = self.ascii_to_numpy(BATTLE_MAP)
         else:
             self.base_map = self.ascii_to_numpy(ascii_map)
         self.view_len = view_len
@@ -122,7 +124,8 @@ class MapEnv(MultiAgentEnv):
         self.color_map = color_map if color_map is not None else DEFAULT_COLOURS.copy()
         # World map image
         self.world_map_color = np.full(
-            (len(self.base_map) + view_len * 2, len(self.base_map[0]) + view_len * 2, 3),
+            # (len(self.base_map) + view_len * 2, len(self.base_map[0]) + view_len * 2, 3),
+            (len(self.base_map), len(self.base_map[0]), 3),
             fill_value=0,
             # dtype=np.uint8,
         )
@@ -344,7 +347,8 @@ class MapEnv(MultiAgentEnv):
         infos = {}
         for agent in self.agents.values():
             agent.full_map = map_with_agents
-            rgb_arr = self.color_view(agent)
+            rgb_arr_temp = self.color_view(agent)
+            rgb_arr = rgb_arr_temp.copy()
             # concatenate on the prev_actions to the observations
             if self.return_agent_actions:
                 prev_actions = np.array(
@@ -393,11 +397,11 @@ class MapEnv(MultiAgentEnv):
         if not ((b'A' in self.world_map) or (b'O' in self.world_map)):
             # HERE IS WHERE YOU HAVE TO ADD THE REGENERATION OF THE MAP
             # TODO:
-            self.regenerate_map()
-            # for agent in self.agents.values():
-            #     dones[agent.agent_id] = True
-            # self.done = True
-        dones["__all__"] = np.any(list(dones.values()))
+            # self.regenerate_map()
+            for agent in self.agents.values():
+                dones[agent.agent_id] = True
+            self.done = True
+        dones["__all__"] = np.any(list(dones.values()))   
         return observations, rewards, dones, infos
 
     def reset(self, seed=None):
@@ -513,8 +517,9 @@ class MapEnv(MultiAgentEnv):
     def color_view(self, agent):
         row, col = agent.pos[0], agent.pos[1]
         view_slice = self.world_map_color[
-            row + self.map_padding - self.view_len : row + self.map_padding + self.view_len + 1,
-            col + self.map_padding - self.view_len : col + self.map_padding + self.view_len + 1,
+            # row + self.map_padding - self.view_len : row + self.map_padding + self.view_len + 1,
+            (row - self.view_len) : (row + self.view_len +1),
+            (col - self.view_len) : (col + self.view_len +1),
         ]
         if agent.orientation == "UP":
             rotated_view = view_slice
@@ -523,7 +528,7 @@ class MapEnv(MultiAgentEnv):
         elif agent.orientation == "DOWN":
             rotated_view = np.rot90(view_slice, k=2)
         elif agent.orientation == "RIGHT":
-            rotated_view = np.rot90(view_slice, k=1, axes=(1, 0))
+            rotated_view = np.rot90(view_slice, k=1, axes=(1, 0))            
         return rotated_view
 
     def map_to_colors(self, mmap, color_map, rgb_arr, orientation="UP"):
@@ -813,18 +818,21 @@ class MapEnv(MultiAgentEnv):
 
     def single_update_map(self, row, col, char):
         self.world_map[row, col] = char
-        self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        # self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        self.world_map_color[row, col] = self.color_map[char]
 
     def single_update_world_color_map(self, row, col, char):
         """Only update the color map. This is done separately when agents move, because their own
         position state is not contained in self.world_map, but in their own Agent objects"""
-        self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        # self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        self.world_map_color[row, col] = self.color_map[char]
 
     def reset_map(self):
         """Resets the map to be empty as well as a custom reset set by subclasses"""
         self.world_map = np.full((len(self.base_map), len(self.base_map[0])), b" ", dtype="c")
         self.world_map_color = np.full(
-            (len(self.base_map) + self.view_len * 2, len(self.base_map[0]) + self.view_len * 2, 3),
+            # (len(self.base_map) + self.view_len * 2, len(self.base_map[0]) + self.view_len * 2, 3),
+            (len(self.base_map), len(self.base_map[0]), 3),
             fill_value=0,
             # dtype=np.uint8,
         )

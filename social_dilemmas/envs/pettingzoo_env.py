@@ -7,7 +7,7 @@ from pettingzoo.utils.env import ParallelEnv
 
 from social_dilemmas.envs.env_creator import get_env_creator
 
-MAX_CYCLES = 100
+MAX_CYCLES = 300
 
 
 def parallel_env(max_cycles=MAX_CYCLES, **ssd_args):

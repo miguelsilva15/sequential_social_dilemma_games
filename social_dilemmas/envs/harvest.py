@@ -106,8 +106,8 @@ class HarvestEnv(MapEnv):
 
     def regenerate_map(self):
         # TODO: edit create map para solo llamarlo aqui
-        # self.world_map = self.ascii_to_numpy(create_map(existing_map = self.world_map, distance=9))
-        self.world_map = self.ascii_to_numpy(BATTLE_MAP)
+        self.world_map = self.ascii_to_numpy(create_map(existing_map = self.world_map, distance=9))
+        # self.world_map = self.ascii_to_numpy(BATTLE_MAP)
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
@@ -130,8 +130,8 @@ class HarvestEnv(MapEnv):
         # self.update_map(new_apples)
         # self.update_map(new_oranges)
 
-        # self.base_map = self.ascii_to_numpy(create_map(distance=9))
-        self.base_map = self.ascii_to_numpy(BATTLE_MAP)
+        self.base_map = self.ascii_to_numpy(create_map(distance=9))
+        # self.base_map = self.ascii_to_numpy(BATTLE_MAP)
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
