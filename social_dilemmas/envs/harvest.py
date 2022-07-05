@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from numpy.random import rand
 from gym.spaces import Discrete
@@ -5,7 +6,7 @@ from gym.spaces import Discrete
 from math import floor
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.map_env import MapEnv
-from social_dilemmas.maps import HARVEST_MAP
+from social_dilemmas.maps import HARVEST_MAP, BIGGEST_HARVEST
 from social_dilemmas.envs.generate_map import create_map
 from social_dilemmas.maps import BATTLE_MAP
 
@@ -14,9 +15,9 @@ APPLE_RADIUS = 2
 # Add custom actions to the agent
 # _HARVEST_ACTIONS = {"FIRE": 5}  # length of firing range
 
-# SPAWN_PROB = [0, 0.005, 0.02, 0.05]
+SPAWN_PROB = [0, 0.0005, 0.002, 0.005]
 
-SPAWN_PROB = [1, 1, 1, 1]
+# SPAWN_PROB = [1, 1, 1, 1]
 
 HARVEST_VIEW_SIZE = 4
 
@@ -32,6 +33,7 @@ class HarvestEnv(MapEnv):
         proportion = 0.5,
         alpha=0.0,
         poc = True,
+        spawn = True,
         beta=0.0,
     ):
         super().__init__(
@@ -45,7 +47,8 @@ class HarvestEnv(MapEnv):
             alpha=alpha,
             beta=beta,
             poc = poc,
-            proportion=proportion
+            proportion=proportion,
+            spawn = spawn
         )
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
@@ -106,8 +109,8 @@ class HarvestEnv(MapEnv):
 
     def regenerate_map(self):
         # TODO: edit create map para solo llamarlo aqui
-        self.world_map = self.ascii_to_numpy(create_map(existing_map = self.world_map, distance=9))
-        # self.world_map = self.ascii_to_numpy(BATTLE_MAP)
+        # self.world_map = self.ascii_to_numpy(create_map(existing_map = self.world_map, distance=9))
+        self.world_map = self.ascii_to_numpy(BIGGEST_HARVEST)
         self.apple_points = []
         for row in range(self.base_map.shape[0]):
             for col in range(self.base_map.shape[1]):
@@ -125,24 +128,24 @@ class HarvestEnv(MapEnv):
     def custom_map_update(self):
         """See parent class"""
         # spawn the apples
-        # new_apples = self.spawn_apples()
-        # new_oranges = self.spawn_oranges()
-        # self.update_map(new_apples)
-        # self.update_map(new_oranges)
+        new_apples = self.spawn_apples()
+        new_oranges = self.spawn_oranges()
+        self.update_map(new_apples)
+        self.update_map(new_oranges)
 
-        self.base_map = self.ascii_to_numpy(create_map(distance=9))
+        # self.base_map = self.ascii_to_numpy(create_map(distance=9))
         # self.base_map = self.ascii_to_numpy(BATTLE_MAP)
-        self.apple_points = []
-        for row in range(self.base_map.shape[0]):
-            for col in range(self.base_map.shape[1]):
-                if self.base_map[row, col] == b"A":
-                    self.apple_points.append([row, col])
+        # self.apple_points = []
+        # for row in range(self.base_map.shape[0]):
+        #     for col in range(self.base_map.shape[1]):
+        #         if self.base_map[row, col] == b"A":
+        #             self.apple_points.append([row, col])
 
-        self.orange_points = []
-        for row in range(self.base_map.shape[0]):
-            for col in range(self.base_map.shape[1]):
-                if self.base_map[row, col] == b"O":
-                    self.orange_points.append([row, col])
+        # self.orange_points = []
+        # for row in range(self.base_map.shape[0]):
+        #     for col in range(self.base_map.shape[1]):
+        #         if self.base_map[row, col] == b"O":
+        #             self.orange_points.append([row, col])
 
 
 
@@ -155,20 +158,22 @@ class HarvestEnv(MapEnv):
         new_apple_points: list of 2-d lists
             a list containing lists indicating the spawn positions of new apples
         """
-
         new_apple_points = []
         agent_positions = self.agent_pos
-        random_numbers = rand(len(self.apple_points))
-        r = 0
-        for i in range(len(self.apple_points)):
-            row, col = self.apple_points[i]
+        # random_numbers = rand(len(self.apple_points))
+        # r = 0
+        # for i in range(len(self.apple_points)):
+        rows, cols = np.where(self.world_map == b' ')
+        for row, col in zip(rows, cols):
+            # row, col = self.apple_points[i]
             # apples can't spawn where agents are standing or where an apple already is
             if [row, col] not in agent_positions and (self.world_map[row, col] != b"A") and (self.world_map[row, col] != b"O"):
                 num_apples = 0
                 for j in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
                     for k in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
                         if j ** 2 + k ** 2 <= APPLE_RADIUS:
-                            x, y = self.apple_points[i]
+                            # x, y = self.apple_points[i]
+                            x , y = row, col
                             if (
                                 0 <= x + j < self.world_map.shape[0]
                                 and self.world_map.shape[1] > y + k >= 0
@@ -177,8 +182,9 @@ class HarvestEnv(MapEnv):
                                     num_apples += 1
 
                 spawn_prob = SPAWN_PROB[min(num_apples, 3)]
-                rand_num = random_numbers[r]
-                r += 1
+                # rand_num = random_numbers[r]
+                # r += 1
+                rand_num =  random.uniform(0, 1)
                 if rand_num < spawn_prob:
                     new_apple_points.append((row, col, b"A"))
         return new_apple_points
@@ -194,17 +200,17 @@ class HarvestEnv(MapEnv):
 
         new_orange_points = []
         agent_positions = self.agent_pos
-        random_numbers = rand(len(self.apple_points))
+        random_numbers = rand(len(self.orange_points))
         r = 0
-        for i in range(len(self.apple_points)):
-            row, col = self.apple_points[i]
+        for i in range(len(self.orange_points)):
+            row, col = self.orange_points[i]
             # apples can't spawn where agents are standing or where an apple already is
             if [row, col] not in agent_positions and (self.world_map[row, col] != b"A") and (self.world_map[row, col] != b"O"):
                 num_oranges = 0
                 for j in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
                     for k in range(-APPLE_RADIUS, APPLE_RADIUS + 1):
                         if j ** 2 + k ** 2 <= APPLE_RADIUS:
-                            x, y = self.apple_points[i]
+                            x, y = self.orange_points[i]
                             if (
                                 0 <= x + j < self.world_map.shape[0]
                                 and self.world_map.shape[1] > y + k >= 0

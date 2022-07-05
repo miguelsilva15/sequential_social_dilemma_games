@@ -7,8 +7,7 @@ from gym.spaces import Box, Dict
 # from ray.rllib.agents.callbacks import DefaultCallbacks
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.generate_map import create_map
-from social_dilemmas.maps import BATTLE_MAP
-from social_dilemmas.maps import APPLE_AGENT_POSITON, APPLE_RESOURCE_POSITION, ORANGE_AGENT_POSITON
+from social_dilemmas.maps import BIGGEST_HARVEST
 
 
 from ray.rllib.env import MultiAgentEnv
@@ -75,7 +74,7 @@ class MapEnv(MultiAgentEnv):
         return_agent_actions=False,
         use_collective_reward=False,
         inequity_averse_reward=False,
-        spawn=False,
+        spawn=True,
         alpha=0.0,
         beta=0.0,
         proportion = 0.5,
@@ -100,8 +99,8 @@ class MapEnv(MultiAgentEnv):
         self.num_agents = num_agents
         self.poc = poc
         if self.poc:
-            self.base_map = self.ascii_to_numpy(create_map(distance=9))
-            # self.base_map = self.ascii_to_numpy(BATTLE_MAP)
+            # self.base_map = self.ascii_to_numpy(create_map(distance=9))
+            self.base_map = self.ascii_to_numpy(BIGGEST_HARVEST)
         else:
             self.base_map = self.ascii_to_numpy(ascii_map)
         self.view_len = view_len
@@ -325,9 +324,7 @@ class MapEnv(MultiAgentEnv):
         # execute custom moves like firing
         self.update_custom_moves(agent_actions)
 
-        if self.spawn:
-            # execute spawning events
-            self.custom_map_update()
+        self.custom_map_update()
 
         map_with_agents = self.get_map_with_agents()
         # Add agents to color map
