@@ -7,8 +7,7 @@ from gym.spaces import Box, Dict
 # from ray.rllib.agents.callbacks import DefaultCallbacks
 from social_dilemmas.envs.agent import HarvestAppleAgent, HarvestOrangeAgent
 from social_dilemmas.envs.generate_map import create_map
-from social_dilemmas.maps import BIGGEST_HARVEST
-
+from social_dilemmas.maps import BIGGEST_HARVEST, NORMAL_HARVEST
 
 from ray.rllib.env import MultiAgentEnv
 
@@ -100,7 +99,7 @@ class MapEnv(MultiAgentEnv):
         self.poc = poc
         if self.poc:
             # self.base_map = self.ascii_to_numpy(create_map(distance=9))
-            self.base_map = self.ascii_to_numpy(BIGGEST_HARVEST)
+            self.base_map = self.ascii_to_numpy(NORMAL_HARVEST)
         else:
             self.base_map = self.ascii_to_numpy(ascii_map)
         self.view_len = view_len
@@ -391,13 +390,13 @@ class MapEnv(MultiAgentEnv):
                 adv_inequity = self.beta * sum(diff[diff < 0])
                 temp_rewards[agent] -= (dis_inequity + adv_inequity) / (self.num_agents - 1)
             rewards = temp_rewards
-        if not ((b'A' in self.world_map) or (b'O' in self.world_map)):
+        # if not ((b'A' in self.world_map) or (b'O' in self.world_map)):
             # HERE IS WHERE YOU HAVE TO ADD THE REGENERATION OF THE MAP
             # TODO:
             # self.regenerate_map()
-            for agent in self.agents.values():
-                dones[agent.agent_id] = True
-            self.done = True
+        #     for agent in self.agents.values():
+        #         dones[agent.agent_id] = True
+        #     self.done = True
         dones["__all__"] = np.any(list(dones.values()))   
         return observations, rewards, dones, infos
 
@@ -514,9 +513,10 @@ class MapEnv(MultiAgentEnv):
     def color_view(self, agent):
         row, col = agent.pos[0], agent.pos[1]
         view_slice = self.world_map_color[
-            # row + self.map_padding - self.view_len : row + self.map_padding + self.view_len + 1,
-            (row - self.view_len) : (row + self.view_len +1),
-            (col - self.view_len) : (col + self.view_len +1),
+            row + self.map_padding - self.view_len : row + self.map_padding + self.view_len + 1,
+            col + self.map_padding - self.view_len : col + self.map_padding + self.view_len + 1,
+            # (row - self.view_len) : (row + self.view_len +1),
+            # (col - self.view_len) : (col + self.view_len +1),
         ]
         if agent.orientation == "UP":
             rotated_view = view_slice
@@ -815,21 +815,21 @@ class MapEnv(MultiAgentEnv):
 
     def single_update_map(self, row, col, char):
         self.world_map[row, col] = char
-        # self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
-        self.world_map_color[row, col] = self.color_map[char]
+        self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        # self.world_map_color[row, col] = self.color_map[char]
 
     def single_update_world_color_map(self, row, col, char):
         """Only update the color map. This is done separately when agents move, because their own
         position state is not contained in self.world_map, but in their own Agent objects"""
-        # self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
-        self.world_map_color[row, col] = self.color_map[char]
+        self.world_map_color[row + self.map_padding, col + self.map_padding] = self.color_map[char]
+        # self.world_map_color[row, col] = self.color_map[char]
 
     def reset_map(self):
         """Resets the map to be empty as well as a custom reset set by subclasses"""
         self.world_map = np.full((len(self.base_map), len(self.base_map[0])), b" ", dtype="c")
         self.world_map_color = np.full(
-            # (len(self.base_map) + self.view_len * 2, len(self.base_map[0]) + self.view_len * 2, 3),
-            (len(self.base_map), len(self.base_map[0]), 3),
+            (len(self.base_map) + self.view_len * 2, len(self.base_map[0]) + self.view_len * 2, 3),
+            # (len(self.base_map), len(self.base_map[0]), 3),
             fill_value=0,
             # dtype=np.uint8,
         )
